@@ -1,3 +1,14 @@
+html, body {
+  height: 100%;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .App {
   text-align: center;
 }
@@ -24,15 +35,40 @@
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.row {
+  display: flex;
+  gap: 5px;
+}
+
+.cell {
+  height: 40px;
+  width: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;  
+  /* line-height: 40px; */
+  /*  background-color: red; */
+  border: 2px white solid;
+}
+
+.cell.yes {
+  background-color: green;
+}
+
+.cell.present {
+  background-color: yellow;
+}
+
+.cell.no {
+  background-color: gray;
+}
+
+button {
+  margin: 10px;
 }
