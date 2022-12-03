@@ -5,9 +5,9 @@ function testGuess(guess, word) {
   //console.log(guess, word);
   let statuses = [];
   for (let i = 0; i < 5; i++) {
-    if (guess[i][0] === word[i]) {
+    if (guess[i].letter === word[i]) {
       statuses.push("yes");
-    } else if (word.includes(guess[i][0])) {
+    } else if (word.includes(guess[i].letter)) {
       statuses.push("present");
     } else {
       statuses.push("no");
@@ -18,82 +18,94 @@ function testGuess(guess, word) {
 
 function App() {
   const [word, setWord] = useState(null);
-  const [grid, setGrid] = useState(
-    [...Array(6)].map((e) => Array(5).fill(["", ""]))
+  const [rows, setRows] = useState(
+    [...Array(6)].map((e) => Array(5).fill(null))
   );
-  const [coords, setCoords] = useState([0, 0]);
+  const [currRowIndex, setCurrRowIndex] = useState(0);
+  const [currCellIndex, setCurrCellIndex] = useState(0);
   const [done, setDone] = useState(false);
   const [reset, setReset] = useState(true);
 
   const handleKeyDown = useCallback(
     (e) => {
-      let targetCoords = [];
-      let newCoords = [];
-      let letterToPrint = "";
       if (done) {
         return;
       }
 
+      console.log(currRowIndex);
+
       // Submit guess
       if (e.key === "Enter") {
-        if (coords[1] !== 5) {
+        if (currCellIndex < 5) {
           return;
         }
-        let statuses = testGuess(grid[coords[0]], word.toUpperCase());
-        //console.log(statuses);
-        setGrid((prevGrid) =>
-          prevGrid.map((row, i) =>
-            row.map((cell, j) =>
-              i === coords[0]
-                ? [prevGrid[i][j][0], statuses[j]]
-                : prevGrid[i][j]
+        let statuses = testGuess(rows[currRowIndex], word.toUpperCase());
+        setRows(
+          rows.map((row, rowIndex) =>
+            row.map((cell, cellIndex) =>
+              rowIndex === currRowIndex
+                ? {
+                    letter: rows[rowIndex][cellIndex].letter,
+                    status: statuses[cellIndex],
+                  }
+                : cell
             )
           )
         );
+
         if (statuses.every((v) => v === "yes")) {
           setDone(true);
-          console.log("you won");
-        } else if (coords[0] < 5) {
-          setCoords([coords[0] + 1, 0]);
+          console.log("you won!");
+        } else if (currRowIndex < 5) {
+          setCurrRowIndex(currRowIndex + 1);
+          setCurrCellIndex(0);
         } else {
-          console.log("you lost");
+          console.log("you lost..");
         }
-        return;
+
         // Backspace
       } else if (e.key === "Backspace") {
-        if (coords[1] === 0) {
+        if (currCellIndex === 0) {
           return;
         }
-        targetCoords = [coords[0], coords[1] - 1];
-        newCoords = targetCoords;
-        letterToPrint = "";
+
+        setRows(
+          rows.map((row, rowIndex) =>
+            row.map((cell, cellIndex) =>
+              rowIndex === currRowIndex && cellIndex === currCellIndex - 1
+                ? null
+                : cell
+            )
+          )
+        );
+        setCurrCellIndex(currCellIndex - 1);
+
         // Enter letter
       } else {
-        if (coords[1] > 4 || e.key < "a" || e.key > "z") {
+        if (currCellIndex > 4 || e.key < "a" || e.key > "z") {
           return;
         }
-        targetCoords = [coords[0], coords[1]];
-        newCoords = [coords[0], coords[1] + 1];
-        letterToPrint = e.key.toUpperCase();
-      }
-      setGrid((prevGrid) =>
-        prevGrid.map((row, i) =>
-          row.map((cell, j) =>
-            i === targetCoords[0] && j === targetCoords[1]
-              ? [letterToPrint, ""]
-              : prevGrid[i][j]
+
+        setRows(
+          rows.map((row, rowIndex) =>
+            row.map((cell, cellIndex) =>
+              rowIndex === currRowIndex && cellIndex === currCellIndex
+                ? { letter: e.key.toUpperCase(), status: "" }
+                : cell
+            )
           )
-        )
-      );
-      setCoords([newCoords[0], newCoords[1]]);
+        );
+        setCurrCellIndex(currCellIndex + 1);
+      }
     },
-    [grid, coords, done, word]
+    [rows, currRowIndex, currCellIndex, done, word]
   );
 
   const handleRestartButton = (e) => {
     e.target.blur();
-    setGrid([...Array(6)].map((e) => Array(5).fill(["", ""])));
-    setCoords([0, 0]);
+    setRows([...Array(6)].map((e) => Array(5).fill(null)));
+    setCurrRowIndex(0);
+    setCurrCellIndex(0);
     setDone(false);
     setReset(true);
   };
@@ -120,24 +132,23 @@ function App() {
     };
   }, [handleKeyDown]);
 
-  let rows = [];
-  for (let i = 0; i < 6; i++) {
-    let cells = [];
-    for (let j = 0; j < 5; j++) {
-      const letter = grid[i][j][0];
-      const status = grid[i][j][1];
-      cells.push(
-        <Cell key={j} status={status}>
-          {letter}
-        </Cell>
-      );
-    }
-    rows.push(<Row key={i}>{cells}</Row>);
-  }
-
   return (
     <div className="App">
-      <div className="board">{rows}</div>
+      <div className="board">
+        {rows.map((row, rowIndex) => (
+          <Row key={rowIndex}>
+            {row.map((cell, cellIndex) =>
+              cell ? (
+                <Cell key={cellIndex} status={cell.status}>
+                  {cell.letter}
+                </Cell>
+              ) : (
+                <Cell key={cellIndex}></Cell>
+              )
+            )}
+          </Row>
+        ))}
+      </div>
       <button onClick={handleRestartButton}>Restart</button>
     </div>
   );
